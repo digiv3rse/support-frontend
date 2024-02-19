@@ -1,7 +1,7 @@
 import { css } from '@emotion/react';
 import { palette, textSans } from '@guardian/source-foundations';
-import { recurringContributionPeriodMap } from 'helpers/utilities/timePeriods';
 import type { TierPlanCosts } from '../setup/threeTierConfig';
+import { discountSummaryCopy } from './threeTierCard';
 
 interface ThreeTierDisclaimerProps {
 	planCost: TierPlanCosts;
@@ -13,21 +13,6 @@ const container = css`
 	color: ${palette.neutral[100]};
 	${textSans.xxsmall({ lineHeight: 'tight' })};
 `;
-
-const discountSummaryCopy = (currency: string, planCost: TierPlanCosts) => {
-	// EXAMPLE: £16/month for the first 12 months, then £25/month
-	if (planCost.discount) {
-		const duration = planCost.discount.duration.value;
-		const period = planCost.discount.duration.period;
-		return `${currency}${planCost.discount.price}/${
-			recurringContributionPeriodMap[planCost.discount.duration.period]
-		} for the first ${duration > 1 ? duration : ''} ${
-			recurringContributionPeriodMap[period]
-		}${duration > 1 ? 's' : ''}, then ${currency}${planCost.price}/${
-			recurringContributionPeriodMap[planCost.discount.duration.period]
-		}`;
-	}
-};
 
 export function ThreeTierDisclaimer({
 	planCost,
