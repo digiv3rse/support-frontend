@@ -91,12 +91,18 @@ export const inThreeTier = threeTierCheckoutEnabled(
 
 // ----- Render ----- //
 
-const router = () => {
+export function SupporterPlusRouter() {
 	return (
 		<BrowserRouter>
 			<ScrollToTop />
 			<Provider store={store}>
 				<Routes>
+					{countryIds.map((countryId) => (
+						<Route
+							path={`/${countryId}`}
+							element={<ThreeTierLanding />}
+						></Route>
+					))}
 					{countryIds.map((countryId) => (
 						<>
 							<Route
@@ -134,6 +140,6 @@ const router = () => {
 			</Provider>
 		</BrowserRouter>
 	);
-};
+}
 
-renderPage(router());
+renderPage(SupporterPlusRouter());

@@ -399,7 +399,7 @@ class Application(
       v2recaptchaPublicKey = recaptchaConfigProvider.get(testMode).v2PublicKey,
     )
 
-    Ok(guardian.asJson(guardianEncoder)).withHeaders("Cache-Control" -> "max-age=30")
+    Ok(guardian.asJson(guardianEncoder).deepDropNullValues).withHeaders("Cache-Control" -> "max-age=30")
   }
 }
 
