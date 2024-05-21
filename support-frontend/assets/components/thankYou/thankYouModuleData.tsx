@@ -1,7 +1,13 @@
+import { useState } from 'react';
 import type { IsoCountry } from 'helpers/internationalisation/country';
 import type { CountryGroupId } from 'helpers/internationalisation/countryGroup';
 import type { CsrfState } from 'helpers/redux/checkout/csrf/state';
-import { useContributionsSelector } from 'helpers/redux/storeHooks';
+import {
+	setThankYouFeedbackSurveyHasBeenCompleted,
+	setThankYouSupportReminder,
+} from 'helpers/redux/checkout/thankYouState/actions';
+import type { ThankYouSupportReminderState } from 'helpers/redux/checkout/thankYouState/state';
+import { useContributionsDispatch } from 'helpers/redux/storeHooks';
 import {
 	OPHAN_COMPONENT_ID_AUS_MAP,
 	OPHAN_COMPONENT_ID_SET_REMINDER,
@@ -54,10 +60,14 @@ export const getThankYouModuleData = (
 	email: string,
 	isOneOff: boolean,
 	amountIsAboveThreshold: boolean,
+	supportReminder: ThankYouSupportReminderState,
+	feedbackSurveyHasBeenCompleted?: boolean,
 	campaignCode?: string,
 ): Record<ThankYouModuleType, ThankYouModuleData> => {
-	const { feedbackSurveyHasBeenCompleted, supportReminder } =
-		useContributionsSelector((state) => state.page.checkoutForm.thankYou);
+	const [
+		checkoutFeedbackSurveyHasBeenCompleted,
+		SetCheckoutFeedbackSurveyHasBeenCompleted,
+	] = useState(false);
 
 	const getFeedbackSurveyLink = (countryId: IsoCountry) => {
 		const surveyBasePath = 'https://guardiannewsandmedia.formstack.com/forms/';
@@ -96,14 +106,22 @@ export const getThankYouModuleData = (
 		},
 		feedback: {
 			icon: getThankYouModuleIcon('feedback'),
-			header: getFeedbackHeader(feedbackSurveyHasBeenCompleted),
+			header: getFeedbackHeader(feedbackSurveyHasBeenCompleted ?? false),
 			bodyCopy: (
 				<FeedbackBodyCopy
-					feedbackSurveyHasBeenCompleted={feedbackSurveyHasBeenCompleted}
+					feedbackSurveyHasBeenCompleted={
+						feedbackSurveyHasBeenCompleted ?? false
+					}
 				/>
 			),
 			ctas: feedbackSurveyHasBeenCompleted ? null : (
-				<FeedbackCTA feedbackSurveyLink={getFeedbackSurveyLink(countryId)} />
+				<FeedbackCTA
+					feedbackSurveyLink={getFeedbackSurveyLink(countryId)}
+					onClick={() => {
+						const dispatch = useContributionsDispatch();
+						dispatch(setThankYouFeedbackSurveyHasBeenCompleted(true));
+					}}
+				/>
 			),
 			trackComponentLoadId: OPHAN_COMPONENT_ID_SURVEY,
 		},
@@ -136,12 +154,81 @@ export const getThankYouModuleData = (
 				? 'Your support reminder is set'
 				: 'Set a support reminder',
 			bodyCopy: (
-				<SupportReminderBodyCopy supportReminderState={supportReminder} />
+				<SupportReminderBodyCopy
+					supportReminderState={supportReminder}
+					onChange={(index) => {
+						const dispatch = useContributionsDispatch();
+						dispatch(
+							setThankYouSupportReminder({
+								...supportReminder,
+								selectedChoiceIndex: index,
+							}),
+						);
+					}}
+				/>
 			),
 			ctas: supportReminder.hasBeenCompleted ? null : (
 				<SupportReminderCTAandPrivacy
 					email={email}
 					supportReminderState={supportReminder}
+					onClick={() => {
+						const dispatch = useContributionsDispatch();
+						dispatch(
+							setThankYouSupportReminder({
+								...supportReminder,
+								hasBeenCompleted: true,
+							}),
+						);
+					}}
+				/>
+			),
+		},
+		checkoutFeedback: {
+			icon: getThankYouModuleIcon('feedback'),
+			header: getFeedbackHeader(checkoutFeedbackSurveyHasBeenCompleted),
+			bodyCopy: (
+				<FeedbackBodyCopy
+					feedbackSurveyHasBeenCompleted={
+						checkoutFeedbackSurveyHasBeenCompleted
+					}
+				/>
+			),
+			ctas: checkoutFeedbackSurveyHasBeenCompleted ? null : (
+				<FeedbackCTA
+					feedbackSurveyLink={getFeedbackSurveyLink(countryId)}
+					onClick={() => {
+						SetCheckoutFeedbackSurveyHasBeenCompleted(true);
+					}}
+				/>
+			),
+			trackComponentLoadId: OPHAN_COMPONENT_ID_SURVEY,
+		},
+		checkoutSupportReminder: {
+			icon: getThankYouModuleIcon('supportReminder'),
+			header: supportReminder.hasBeenCompleted
+				? 'Your support reminder is set'
+				: 'Set a support reminder',
+			bodyCopy: (
+				<SupportReminderBodyCopy
+					supportReminderState={supportReminder}
+					onChange={(index) => {
+						setThankYouSupportReminder({
+							...supportReminder,
+							selectedChoiceIndex: index,
+						});
+					}}
+				/>
+			),
+			ctas: supportReminder.hasBeenCompleted ? null : (
+				<SupportReminderCTAandPrivacy
+					email={email}
+					supportReminderState={supportReminder}
+					onClick={() => {
+						setThankYouSupportReminder({
+							...supportReminder,
+							hasBeenCompleted: true,
+						});
+					}}
 				/>
 			),
 			trackComponentLoadId: OPHAN_COMPONENT_ID_SET_REMINDER,
